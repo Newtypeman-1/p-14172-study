@@ -35,6 +35,10 @@ public class PostService {
         return post.addComment(content); // cascade PERSIST 로 저장된다.
     }
 
+    public boolean deleteComment(Post post, PostComment postComment) {
+        return post.deleteComment(postComment); // orphanRemoval 로 DB 에서도 삭제된다.
+    }
+
     public Optional<Post> findLatest() {
         return postRepository.findFirstByOrderByIdDesc();
     }

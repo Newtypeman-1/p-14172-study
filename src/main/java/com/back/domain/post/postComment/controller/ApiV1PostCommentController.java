@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +48,25 @@ public class ApiV1PostCommentController {
                 "201-1",
                 "%d번 댓글이 작성되었습니다.".formatted(postComment.getId()),
                 new PostCommentDto(postComment)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public RsData<Void> delete(
+            @PathVariable long postId,
+            @PathVariable long id
+    ) {
+        Post post = postService.findById(postId).get();
+
+        // 해당 글에 달린 댓글 중에서만 찾는다. 없으면 NoSuchElementException -> 404
+        PostComment postComment = post.findCommentById(id).get();
+
+        postService.deleteComment(post, postComment);
+
+        return new RsData<>(
+                "200-1",
+                "%d번 댓글이 삭제되었습니다.".formatted(id)
         );
     }
 }
