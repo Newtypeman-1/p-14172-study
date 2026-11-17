@@ -26,7 +26,16 @@ public class PostService {
         return postRepository.findById(id);
     }
 
+    public void delete(Post post) {
+        postRepository.delete(post); // 댓글은 cascade REMOVE 로 함께 삭제된다.
+    }
+
     public Optional<Post> findLatest() {
         return postRepository.findFirstByOrderByIdDesc();
+    }
+
+    // 지금까지의 변경사항(INSERT/DELETE 등)을 DB 에 즉시 반영한다. (커밋은 아님)
+    public void flush() {
+        postRepository.flush();
     }
 }
