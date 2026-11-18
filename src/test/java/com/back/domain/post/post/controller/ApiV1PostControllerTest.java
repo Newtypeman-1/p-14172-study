@@ -16,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.handler;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -166,5 +168,37 @@ class ApiV1PostControllerTest {
                         title-NotBlank-must not be blank
                         title-Size-size must be between 2 and 100
                         """.stripIndent().trim()));
+    }
+
+    @Test
+    @DisplayName("글 수정")
+    void t6() throws Exception {
+        long id = 1;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/posts/%d".formatted(id))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "title": "제목 수정",
+                                            "content": "내용 수정"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("modify"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 글이 수정되었습니다.".formatted(id)))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        // 정말 수정되었는지 확인 (선택사항)
+        Post post = postService.findById(id).get();
+        assertThat(post.getTitle()).isEqualTo("제목 수정");
+        assertThat(post.getContent()).isEqualTo("내용 수정");
     }
 }
