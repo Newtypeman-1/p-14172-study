@@ -49,11 +49,8 @@ class ApiV1PostCommentControllerTest {
 
     // 테스트용 도우미 : postId 번 글의 댓글 중에서 id 번 댓글을 꺼낸다.
     private PostComment findComment(long postId, long id) {
-        Post post = postService.findById(postId).get();
-
-        return post.getComments().stream()
-                .filter(comment -> comment.getId() == id)
-                .findFirst()
+        return postService.findById(postId).get()
+                .findCommentById(id)
                 .get();
     }
 
