@@ -13,6 +13,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -92,5 +96,37 @@ class ApiV1PostCommentControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.resultCode").value("404-1"));
+    }
+
+    @Test
+    @DisplayName("댓글 다건조회, 해당 글의 댓글만 최신순으로")
+    void t4() throws Exception {
+        long postId = 1;
+
+        ResultActions resultActions = mvc
+                .perform(get("/api/v1/posts/%d/comments".formatted(postId)))
+                .andDo(print());
+
+        List<PostComment> postComments = postService.findById(postId).get()
+                .getComments().stream()
+                .sorted(Comparator.comparing(PostComment::getId).reversed())
+                .toList();
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("getItems"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(postComments.size())));
+
+        for (int i = 0; i < postComments.size(); i++) {
+            PostComment postComment = postComments.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$[%d].id".formatted(i)).value(postComment.getId()))
+                    .andExpect(jsonPath("$[%d].createDate".formatted(i)).value(matchesPattern(DATE_TIME_PATTERN)))
+                    .andExpect(jsonPath("$[%d].modifyDate".formatted(i)).value(matchesPattern(DATE_TIME_PATTERN)))
+                    .andExpect(jsonPath("$[%d].postId".formatted(i)).value(postId))
+                    .andExpect(jsonPath("$[%d].content".formatted(i)).value(postComment.getContent()));
+        }
     }
 }
