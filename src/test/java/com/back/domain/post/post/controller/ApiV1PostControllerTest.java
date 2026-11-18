@@ -176,6 +176,29 @@ class ApiV1PostControllerTest {
     }
 
     @Test
+    @DisplayName("글 작성, 잘못된 JSON 형식으로 요청하면 400")
+    void t5_2() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "title": "새 제목",
+                                            "content": "새 내용"
+                                        """) // 닫는 중괄호가 없는 잘못된 JSON
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("write"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.resultCode").value("400-1"))
+                .andExpect(jsonPath("$.msg").value("요청 본문이 올바르지 않습니다."));
+    }
+
+    @Test
     @DisplayName("글 수정")
     void t6() throws Exception {
         long id = 1;
