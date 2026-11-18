@@ -50,4 +50,10 @@ public class PostService {
     public List<Post> findAllByOrderByIdDesc() {
         return postRepository.findAllByOrderByIdDesc();
     }
+
+    // 지금까지 모아둔 변경사항(INSERT/UPDATE/DELETE)을 DB 에 바로 보낸다.
+    // 커밋은 아니다. 트랜잭션은 계속 유지되고, 나중에 롤백도 가능하다.
+    public void flush() {
+        postRepository.flush();
+    }
 }

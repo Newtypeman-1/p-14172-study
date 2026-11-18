@@ -68,6 +68,9 @@ public class ApiV1PostCommentController {
 
         PostComment postComment = postService.writeComment(post, reqBody.content());
 
+        // 응답을 만들기 전에 INSERT 를 먼저 실행시켜서 id, createDate, modifyDate 를 채운다.
+        postService.flush();
+
         return new RsData<>(
                 "201-1",
                 "%d번 댓글이 작성되었습니다.".formatted(postComment.getId()),
