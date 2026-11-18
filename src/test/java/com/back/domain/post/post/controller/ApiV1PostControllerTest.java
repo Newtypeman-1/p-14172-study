@@ -12,6 +12,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -72,5 +76,35 @@ class ApiV1PostControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.resultCode").value("404-1"))
                 .andExpect(jsonPath("$.msg").value("해당 데이터가 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("글 다건조회, 최신글부터 정렬")
+    void t3() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/api/v1/posts"))
+                .andDo(print());
+
+        // 기대값 : 모든 글을 id 내림차순(최신글 먼저)으로
+        List<Post> posts = postService.findAll().stream()
+                .sorted(Comparator.comparing(Post::getId).reversed())
+                .toList();
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("getItems"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(posts.size())));
+
+        for (int i = 0; i < posts.size(); i++) {
+            Post post = posts.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$[%d].id".formatted(i)).value(post.getId()))
+                    .andExpect(jsonPath("$[%d].createDate".formatted(i)).value(matchesPattern(DATE_TIME_PATTERN)))
+                    .andExpect(jsonPath("$[%d].modifyDate".formatted(i)).value(matchesPattern(DATE_TIME_PATTERN)))
+                    .andExpect(jsonPath("$[%d].title".formatted(i)).value(post.getTitle()))
+                    .andExpect(jsonPath("$[%d].content".formatted(i)).value(post.getContent()));
+        }
     }
 }
