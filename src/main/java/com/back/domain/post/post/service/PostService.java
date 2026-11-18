@@ -23,6 +23,12 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    public void modify(Post post, String title, String content) {
+        post.modify(title, content);
+        // save 를 호출하지 않아도 된다.
+        // 트랜잭션이 끝날 때 JPA 가 바뀐 필드를 감지(더티체킹)해서 UPDATE 를 실행한다.
+    }
+
     public Optional<Post> findById(long id) {
         return postRepository.findById(id);
     }
