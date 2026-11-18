@@ -11,12 +11,27 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
 public class ApiV1PostCommentController {
     // 댓글은 항상 글을 통해서 다루므로 PostService 만 사용한다.
     private final PostService postService;
+
+    @GetMapping
+    @Transactional(readOnly = true)
+    public List<PostCommentDto> getItems(@PathVariable long postId) {
+        Post post = postService.findById(postId).get();
+
+        return post.getComments()
+                .stream()
+                .sorted(Comparator.comparing(PostComment::getId).reversed()) // 최신 댓글 먼저
+                .map(PostCommentDto::new)
+                .toList();
+    }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
