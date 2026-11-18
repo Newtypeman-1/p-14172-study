@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.handler;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -128,5 +130,63 @@ class ApiV1PostCommentControllerTest {
                     .andExpect(jsonPath("$[%d].postId".formatted(i)).value(postId))
                     .andExpect(jsonPath("$[%d].content".formatted(i)).value(postComment.getContent()));
         }
+    }
+
+    @Test
+    @DisplayName("댓글 작성")
+    void t5() throws Exception {
+        long postId = 1;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(postId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "content": "새 댓글"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        PostComment postComment = postService.findById(postId).get().getComments().getLast(); // 방금 작성된 댓글
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("write"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.resultCode").value("201-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 댓글이 작성되었습니다.".formatted(postComment.getId())))
+                .andExpect(jsonPath("$.data.id").value(postComment.getId()))
+                .andExpect(jsonPath("$.data.createDate").value(matchesPattern(DATE_TIME_PATTERN)))
+                .andExpect(jsonPath("$.data.modifyDate").value(matchesPattern(DATE_TIME_PATTERN)))
+                .andExpect(jsonPath("$.data.postId").value(postId))
+                .andExpect(jsonPath("$.data.content").value("새 댓글"));
+    }
+
+    @Test
+    @DisplayName("댓글 작성, 내용 없이 요청하면 400")
+    void t6() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/1/comments")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "content": ""
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("write"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.resultCode").value("400-1"))
+                .andExpect(jsonPath("$.msg").value("""
+                        content-NotBlank-must not be blank
+                        content-Size-size must be between 2 and 100
+                        """.stripIndent().trim()));
     }
 }
