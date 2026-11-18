@@ -2,6 +2,7 @@ package com.back.global.globalExceptionHandler;
 
 import com.back.global.rsData.RsData;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,5 +40,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(BAD_REQUEST)
                 .body(new RsData<>("400-1", message));
+    }
+
+    // 요청 본문을 JSON 으로 읽을 수 없을 때 (예 : 중괄호가 안 닫힌 JSON)
+    // 처리하지 않으면 스프링 기본 오류 응답이 나가고, 개발 환경에서는 스택 트레이스까지 노출된다.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<RsData<Void>> handle(HttpMessageNotReadableException ex) {
+        return ResponseEntity
+                .status(BAD_REQUEST)
+                .body(new RsData<>("400-1", "요청 본문이 올바르지 않습니다."));
     }
 }
