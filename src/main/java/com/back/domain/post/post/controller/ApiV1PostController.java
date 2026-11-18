@@ -10,11 +10,22 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 public class ApiV1PostController {
     private final PostService postService;
+
+    @GetMapping
+    @Transactional(readOnly = true)
+    public List<PostDto> getItems() {
+        return postService.findAllByOrderByIdDesc()
+                .stream()
+                .map(PostDto::new) // post -> new PostDto(post)
+                .toList();
+    }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
