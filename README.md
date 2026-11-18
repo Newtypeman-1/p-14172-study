@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot&logoColor=white)
 ![JPA](https://img.shields.io/badge/Spring%20Data%20JPA-H2-59666C?logo=hibernate&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-20%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-21%20passed-brightgreen)
 
 Spring Boot로 글/댓글 CRUD API를 만들고, 모든 기능을 **TDD(테스트 먼저 → 구현)** 로 개발한 학습 프로젝트입니다.
 커밋 메시지에 `001`, `002` … 번호를 달아 두어서, 개발 과정을 순서대로 따라가 볼 수 있습니다.
