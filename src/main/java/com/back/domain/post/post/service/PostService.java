@@ -43,6 +43,10 @@ public class PostService {
         postComment.modify(content); // 더티체킹으로 트랜잭션이 끝날 때 UPDATE 된다.
     }
 
+    public boolean deleteComment(Post post, PostComment postComment) {
+        return post.deleteComment(postComment);
+    }
+
     public Optional<Post> findById(long id) {
         return postRepository.findById(id);
     }

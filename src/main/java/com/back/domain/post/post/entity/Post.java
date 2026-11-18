@@ -52,4 +52,11 @@ public class Post extends BaseEntity {
                 .filter(comment -> comment.getId() == id)
                 .findFirst();
     }
+
+    public boolean deleteComment(PostComment postComment) {
+        if (postComment == null) return false;
+
+        // 리스트에서 빼기만 하면 orphanRemoval = true 덕분에 DB 에서도 삭제된다.
+        return comments.remove(postComment);
+    }
 }
