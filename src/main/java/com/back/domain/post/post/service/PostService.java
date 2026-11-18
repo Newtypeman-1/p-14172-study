@@ -39,6 +39,10 @@ public class PostService {
         return post.addComment(content); // cascade PERSIST 로 flush 시점에 INSERT 된다.
     }
 
+    public void modifyComment(PostComment postComment, String content) {
+        postComment.modify(content); // 더티체킹으로 트랜잭션이 끝날 때 UPDATE 된다.
+    }
+
     public Optional<Post> findById(long id) {
         return postRepository.findById(id);
     }
