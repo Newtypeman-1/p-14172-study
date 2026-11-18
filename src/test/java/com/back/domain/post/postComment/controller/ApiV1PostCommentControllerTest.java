@@ -3,6 +3,7 @@ package com.back.domain.post.postComment.controller;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
 import com.back.domain.post.postComment.entity.PostComment;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -41,6 +43,9 @@ class ApiV1PostCommentControllerTest {
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private EntityManager em;
 
     // 테스트용 도우미 : postId 번 글의 댓글 중에서 id 번 댓글을 꺼낸다.
     private PostComment findComment(long postId, long id) {
@@ -223,5 +228,50 @@ class ApiV1PostCommentControllerTest {
 
         // 정말 수정되었는지 확인 (선택사항)
         assertThat(findComment(postId, id).getContent()).isEqualTo("댓글 수정");
+    }
+
+    @Test
+    @DisplayName("댓글 삭제")
+    void t8() throws Exception {
+        long postId = 1;
+        long id = 1;
+
+        ResultActions resultActions = mvc
+                .perform(delete("/api/v1/posts/%d/comments/%d".formatted(postId, id)))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 댓글이 삭제되었습니다.".formatted(id)))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        // DELETE 쿼리를 실제로 실행시키고, 1차 캐시를 비운 뒤 DB 에서 다시 읽어서 확인 (선택사항)
+        em.flush();
+        em.clear();
+
+        Post post = postService.findById(postId).get();
+        assertThat(post.getComments()).hasSize(2);
+        assertThat(post.getComments()).noneMatch(comment -> comment.getId() == id);
+    }
+
+    @Test
+    @DisplayName("댓글 삭제, 다른 글의 댓글 번호로 요청하면 404, 댓글은 그대로")
+    void t9() throws Exception {
+        // 1번 댓글은 1번 글의 댓글이다. 2번 글의 경로로는 지울 수 없어야 한다.
+        ResultActions resultActions = mvc
+                .perform(delete("/api/v1/posts/2/comments/1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostCommentController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.resultCode").value("404-1"))
+                .andExpect(jsonPath("$.msg").value("해당 데이터가 존재하지 않습니다."));
+
+        assertThat(findComment(1, 1)).isNotNull(); // 지워지지 않고 남아 있다.
     }
 }
