@@ -2,6 +2,7 @@ package com.back.domain.post.post.controller;
 
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -40,6 +42,9 @@ class ApiV1PostControllerTest {
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private EntityManager em;
 
     @Test
     @DisplayName("글 단건조회")
@@ -200,5 +205,47 @@ class ApiV1PostControllerTest {
         Post post = postService.findById(id).get();
         assertThat(post.getTitle()).isEqualTo("제목 수정");
         assertThat(post.getContent()).isEqualTo("내용 수정");
+    }
+
+    @Test
+    @DisplayName("글 삭제, 댓글이 달린 글도 삭제된다")
+    void t7() throws Exception {
+        long id = 1; // 1번 글에는 댓글이 3개 있다.
+
+        ResultActions resultActions = mvc
+                .perform(delete("/api/v1/posts/%d".formatted(id)))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 글이 삭제되었습니다.".formatted(id)))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        // 테스트는 끝나면 롤백되므로, 그냥 두면 DELETE 쿼리가 DB 로 가지 않을 수도 있다.
+        // flush 로 DELETE 를 실제로 실행시킨다. 댓글이 먼저 지워지지 않으면 여기서 FK 오류가 난다.
+        em.flush();
+        em.clear(); // 1차 캐시를 비워서 아래 조회가 DB 에서 직접 읽도록
+
+        assertThat(postService.findById(id)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("글 삭제, 존재하지 않는 글이면 404")
+    void t8() throws Exception {
+        long id = Integer.MAX_VALUE;
+
+        ResultActions resultActions = mvc
+                .perform(delete("/api/v1/posts/%d".formatted(id)))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.resultCode").value("404-1"))
+                .andExpect(jsonPath("$.msg").value("해당 데이터가 존재하지 않습니다."));
     }
 }
