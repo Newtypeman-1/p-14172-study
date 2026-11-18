@@ -29,6 +29,11 @@ public class PostService {
         // 트랜잭션이 끝날 때 JPA 가 바뀐 필드를 감지(더티체킹)해서 UPDATE 를 실행한다.
     }
 
+    public void delete(Post post) {
+        postRepository.delete(post);
+        // Post.comments 의 cascade = REMOVE 덕분에 댓글들이 먼저 삭제되고, 그 다음 글이 삭제된다.
+    }
+
     public Optional<Post> findById(long id) {
         return postRepository.findById(id);
     }

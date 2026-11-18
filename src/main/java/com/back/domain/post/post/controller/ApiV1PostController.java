@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +92,19 @@ public class ApiV1PostController {
         return new RsData<>(
                 "200-1",
                 "%d번 글이 수정되었습니다.".formatted(id)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public RsData<Void> delete(@PathVariable long id) {
+        Post post = postService.findById(id).get();
+
+        postService.delete(post);
+
+        return new RsData<>(
+                "200-1",
+                "%d번 글이 삭제되었습니다.".formatted(id)
         );
     }
 }
