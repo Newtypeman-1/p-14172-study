@@ -31,4 +31,11 @@ public class Post extends BaseEntity {
         this.title = title;
         this.content = content;
     }
+
+    public PostComment addComment(String content) {
+        PostComment postComment = new PostComment(this, content);
+        comments.add(postComment); // save 를 직접 하지 않아도 cascade PERSIST 로 저장된다.
+
+        return postComment;
+    }
 }
