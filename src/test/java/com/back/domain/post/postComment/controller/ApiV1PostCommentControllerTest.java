@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -157,6 +158,8 @@ class ApiV1PostCommentControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("201-1"))
                 .andExpect(jsonPath("$.msg").value("%d번 댓글이 작성되었습니다.".formatted(postComment.getId())))
+                // 기대값(postComment.getId())도 0 이면 "0 == 0" 으로 통과해 버리므로, 0 보다 큰지 따로 확인한다.
+                .andExpect(jsonPath("$.data.id").value(greaterThan(0)))
                 .andExpect(jsonPath("$.data.id").value(postComment.getId()))
                 .andExpect(jsonPath("$.data.createDate").value(matchesPattern(DATE_TIME_PATTERN)))
                 .andExpect(jsonPath("$.data.modifyDate").value(matchesPattern(DATE_TIME_PATTERN)))
