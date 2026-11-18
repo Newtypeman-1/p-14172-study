@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.CascadeType.REMOVE;
@@ -42,5 +43,13 @@ public class Post extends BaseEntity {
         comments.add(postComment); // save 를 직접 하지 않아도 cascade PERSIST 로 저장된다.
 
         return postComment;
+    }
+
+    // 이 글에 달린 댓글 중에서만 찾는다.
+    // 그래서 다른 글의 댓글 번호를 넣으면 Optional.empty() 가 된다.
+    public Optional<PostComment> findCommentById(long id) {
+        return comments.stream()
+                .filter(comment -> comment.getId() == id)
+                .findFirst();
     }
 }
